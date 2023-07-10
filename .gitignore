@@ -1,1 +1,6 @@
 /target
+venv/
+.env
+temp.json
+interactive_console.py
+.tumblr
