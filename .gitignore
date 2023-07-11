@@ -4,3 +4,4 @@ venv/
 temp.json
 interactive_console.py
 .tumblr
+blocked.json
