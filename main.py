@@ -75,7 +75,7 @@ def is_rate_limit(response):
 
 def block_post_likers(client):
     info = client.info()
-    name = info["user"]["name"]
+    blog_name = info["user"]["name"]
     post = input("What is the url to the post: ").strip()
     split_post = post[post.index("tumblr.com/") + 11:].split("/")
     blog = split_post[0]
@@ -98,7 +98,7 @@ def block_post_likers(client):
                     follow = i["followed"]
                     name = i["blog_name"]
                     if follow:
-                        print(f"You follow {name}")
+                        print(f"You follow {name} they wont be blocked")
                     else:
                         blogs_to_block.append(name)
                 next_link = notes["_links"]["next"]
@@ -123,7 +123,7 @@ def block_post_likers(client):
             blogs_to_block_csv = ",".join(blogs_to_block)
             block_response = client.send_api_request(
                 method="post",
-                url=f"/v2/blog/{name}/blocks/bulk",
+                url=f"/v2/blog/{blog_name}/blocks/bulk",
                 params={"blocked_tumblelogs": blogs_to_block_csv},
                 valid_parameters=["blocked_tumblelogs"]
             )
@@ -162,6 +162,7 @@ def get_blocked_blogs(client):
             print("Begining to read blocked blogs, tumblr is rate limited so this may take a while (roughly 0.05s per blocked account)")
         next_newest_uuid = blocked["blocked_tumblelogs"][0]["uuid"]
         next_newest_timestamp = blocked["blocked_tumblelogs"][0]["blocked_timestamp"]
+        old_count = blocked_tumblelogs["count"]
         keep_paging = True
 
         with yaspin(text="Reading") as spinner:
@@ -179,7 +180,7 @@ def get_blocked_blogs(client):
                         else:
                             blocked_tumblelogs["blocked_tumblelogs"].append(i)
                     next_link = blocked["_links"]["next"]
-                    sleep(1.1)
+                    sleep(1.01)
                     blocked = client.send_api_request(
                         method="get",
                         url=f"/v2/blog/{name}/blocks",
@@ -202,15 +203,18 @@ def get_blocked_blogs(client):
                     keep_paging = False
                     break
             spinner.ok("✅ ")
-        
+
+        newest_count = len(blocked_tumblelogs["blocked_tumblelogs"]) 
         blocked_tumblelogs.update({
-            "count": len(blocked_tumblelogs["blocked_tumblelogs"]),
+            "count": newest_count,
             "newest_uuid": next_newest_uuid,
             "newest_timestamp": next_newest_timestamp
         })
-
+        
         with open(blocked_save_file, "w") as file:
             file.write(json.dumps(blocked_tumblelogs, sort_keys=True, indent=4))
+
+        print(f"Found {newest_count - old_count} newley blocked blogs\nFor a total of {newest_count}")
         return
     
 def like_reblog_ratio(client):
