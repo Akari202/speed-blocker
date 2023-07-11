@@ -212,6 +212,20 @@ def get_blocked_blogs(client):
         with open(blocked_save_file, "w") as file:
             file.write(json.dumps(blocked_tumblelogs, sort_keys=True, indent=4))
         return
+    
+def like_reblog_ratio(client):
+    info = client.info()["user"]
+    likes = info["likes"]
+    posts = 0
+    blog_count = 0
+    for i in info["blogs"]:
+        if i["admin"]:
+            posts += i["total_posts"]
+            blog_count += 1
+    print(f"Your reblog to like ratio is: {round(posts / likes, 4)}")
+    print(f"You have {likes} likes and {posts} total posts across all {blog_count} blogs you are an admin of")
+    # print(json.dumps(info, sort_keys=True, indent=4))
+    return
 
 def main():
     tokens = get_tokens() 
@@ -225,6 +239,7 @@ def main():
     while True:
         print("[B]: block people who liked a given post")
         print("[G]: get/update data on all blocked blogs")
+        print("[R]: show your reblog to like ratio bc why not")
         print("[Q]: exit the program")
         choice = input("What would you like to do? ").strip().lower()
         match choice:
@@ -232,6 +247,8 @@ def main():
                 block_post_likers(client)
             case "g":
                 get_blocked_blogs(client)
+            case "r":
+                like_reblog_ratio(client)
             case "q":
                 return
             case _:
